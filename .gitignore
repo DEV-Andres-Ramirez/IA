@@ -1,0 +1,38 @@
+# ---------- macOS ----------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+develop-eggs/
+.installed.cfg
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ---------- Entornos virtuales ----------
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ---------- IDEs ----------
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ---------- Logs y temporales ----------
+*.log
+*.tmp
+*.bak

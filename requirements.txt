@@ -1,0 +1,6 @@
+# Hand-controlled mouse -- direct dependencies.
+# Requires Python 3.12 (MediaPipe has no working build for 3.13/3.14 yet).
+mediapipe==0.10.21
+opencv-contrib-python==4.10.0.84
+numpy==1.26.4
+pyautogui==0.9.54
