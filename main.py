@@ -4,7 +4,6 @@ Control your computer's cursor with one hand in front of the webcam:
 
     - Move      : point with the index finger.
     - Click/Drag: pinch thumb + index (quick = click, hold = drag).
-    - Right clic: pinch thumb + middle finger.
     - Quit      : press 'q' or ESC in the preview window, or Ctrl+C here.
 
 Run with:  python main.py

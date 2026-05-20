@@ -32,7 +32,6 @@ class Landmark(IntEnum):
     THUMB_TIP = 4
     INDEX_MCP = 5  # knuckle at the base of the index finger
     INDEX_TIP = 8
-    MIDDLE_TIP = 12
 
 
 @dataclass(frozen=True)

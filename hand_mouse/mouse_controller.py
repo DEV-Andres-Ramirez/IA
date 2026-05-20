@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import time
 
 import pyautogui
 
@@ -16,7 +15,7 @@ logger = logging.getLogger(__name__)
 # Hand control routinely pushes the cursor into a screen corner. PyAutoGUI's
 # fail-safe treats that as an abort signal, which would crash the program, so
 # it is disabled deliberately; the user quits with the keyboard instead.
-# PAUSE is zeroed so moveTo/click do not sleep between calls.
+# PAUSE is zeroed so moveTo and button calls do not sleep between frames.
 pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0.0
 
@@ -40,8 +39,6 @@ class MouseController:
 
         self._smoothed: Point | None = None
         self._left_button_down = False
-        self._right_pinch_was_active = False
-        self._last_right_click_at = 0.0
         logger.info(
             "Screen resolution detected: %dx%d.",
             self._screen_width,
@@ -52,7 +49,6 @@ class MouseController:
         """Apply one frame of gestures to the operating-system cursor."""
         self._move_cursor(gestures.cursor_target)
         self._apply_left_pinch(gestures.left_pinch)
-        self._apply_right_pinch(gestures.right_pinch)
 
     def release(self) -> None:
         """Release any held button and drop smoothing state.
@@ -64,7 +60,6 @@ class MouseController:
             pyautogui.mouseUp()
             self._left_button_down = False
             logger.debug("Left button released (tracking lost).")
-        self._right_pinch_was_active = False
         self._smoothed = None
 
     def _move_cursor(self, target: Point) -> None:
@@ -81,18 +76,6 @@ class MouseController:
             pyautogui.mouseUp()
             self._left_button_down = False
             logger.debug("Left button up.")
-
-    def _apply_right_pinch(self, pinching: bool) -> None:
-        # Fire once on the rising edge; a cooldown blocks accidental repeats.
-        rising_edge = pinching and not self._right_pinch_was_active
-        self._right_pinch_was_active = pinching
-        if not rising_edge:
-            return
-        now = time.monotonic()
-        if now - self._last_right_click_at >= self._config.right_click_cooldown:
-            pyautogui.click(button="right")
-            self._last_right_click_at = now
-            logger.debug("Right click.")
 
     def _map_to_screen(self, target: Point) -> Point:
         """Map a normalised hand position to absolute screen coordinates.

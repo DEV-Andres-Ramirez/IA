@@ -25,12 +25,10 @@ class HandGestures:
     Attributes:
         cursor_target: Normalised position the cursor should track.
         left_pinch:    Thumb-index pinch held -> left button down (click/drag).
-        right_pinch:   Thumb-middle pinch held -> right click on its rising edge.
     """
 
     cursor_target: Point
     left_pinch: bool
-    right_pinch: bool
 
 
 class GestureRecognizer:
@@ -39,36 +37,23 @@ class GestureRecognizer:
     def __init__(self, config: ControlConfig) -> None:
         self._config = config
         self._left_state = PinchState.OPEN
-        self._right_state = PinchState.OPEN
 
     def recognize(self, hand: HandLandmarks) -> HandGestures:
         """Interpret one hand. Cursor follows the index fingertip."""
-        palm_size = hand.palm_size
-
         thumb_index_gap = hand[Landmark.THUMB_TIP].distance_to(
             hand[Landmark.INDEX_TIP]
         )
-        thumb_middle_gap = hand[Landmark.THUMB_TIP].distance_to(
-            hand[Landmark.MIDDLE_TIP]
-        )
-
         self._left_state = self._next_pinch_state(
-            self._left_state, thumb_index_gap, palm_size
+            self._left_state, thumb_index_gap, hand.palm_size
         )
-        self._right_state = self._next_pinch_state(
-            self._right_state, thumb_middle_gap, palm_size
-        )
-
         return HandGestures(
             cursor_target=hand[Landmark.INDEX_TIP],
             left_pinch=self._left_state is PinchState.CLOSED,
-            right_pinch=self._right_state is PinchState.CLOSED,
         )
 
     def reset(self) -> None:
         """Forget pinch state; call when the hand leaves the frame."""
         self._left_state = PinchState.OPEN
-        self._right_state = PinchState.OPEN
 
     def _next_pinch_state(
         self, current: PinchState, raw_gap: float, palm_size: float

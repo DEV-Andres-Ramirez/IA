@@ -48,9 +48,6 @@ class ControlConfig:
     pinch_close_threshold: float = 0.45
     pinch_open_threshold: float = 0.65
 
-    # Minimum seconds between two consecutive right clicks.
-    right_click_cooldown: float = 0.6
-
     def __post_init__(self) -> None:
         if not 0.0 <= self.active_region_margin < 0.5:
             raise ValueError("active_region_margin must be in [0.0, 0.5).")
