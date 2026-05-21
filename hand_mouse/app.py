@@ -5,14 +5,13 @@ from __future__ import annotations
 import logging
 import time
 
-import cv2
-
 from .camera import Camera
 from .config import AppConfig
 from .gesture import GestureRecognizer, HandGestures
 from .hand_tracker import HandTracker
 from .hud import draw_overlay
 from .mouse_controller import MouseController
+from .preview_window import PreviewWindow
 
 logger = logging.getLogger(__name__)
 
@@ -51,12 +50,17 @@ class HandMouseApp:
         self._recognizer = GestureRecognizer(config.control)
         self._mouse = MouseController(config.control)
         self._fps_meter = _FpsMeter()
+        self._window = (
+            PreviewWindow(config.window_name) if config.show_window else None
+        )
 
     def run(self) -> None:
         """Open the camera and process frames until the user quits."""
         logger.info("Starting Hand Mouse. Press 'q' or ESC to quit.")
         with Camera(self._config.camera) as camera:
             try:
+                if self._window is not None:
+                    self._window.open()
                 self._main_loop(camera)
             finally:
                 self._shutdown()
@@ -77,7 +81,7 @@ class HandMouseApp:
                 gestures = None
 
             fps = self._fps_meter.tick()
-            if self._config.show_window:
+            if self._window is not None:
                 draw_overlay(
                     frame,
                     hand,
@@ -85,18 +89,13 @@ class HandMouseApp:
                     fps,
                     self._config.control.active_region_margin,
                 )
-                cv2.imshow(self._config.window_name, frame)
-                if self._quit_requested():
+                self._window.show(frame)
+                if self._window.quit_requested(self._config.quit_keys):
                     break
-
-    def _quit_requested(self) -> bool:
-        # waitKey also yields to the GUI event loop, so the window stays
-        # responsive; 1 ms keeps the loop running near camera frame rate.
-        key = cv2.waitKey(1) & 0xFF
-        return key in self._config.quit_keys
 
     def _shutdown(self) -> None:
         self._mouse.release()
         self._tracker.close()
-        cv2.destroyAllWindows()
+        if self._window is not None:
+            self._window.close()
         logger.info("Hand Mouse stopped.")

@@ -149,7 +149,12 @@ def _draw_cursor_marker(
         int(gestures.cursor_target.x * width),
         int(gestures.cursor_target.y * height),
     )
-    colour = _RED if gestures.left_pinch else _GREEN
+    if gestures.two_gesture:
+        colour = _CYAN
+    elif gestures.left_pinch:
+        colour = _RED
+    else:
+        colour = _GREEN
     cv2.circle(frame, centre, 14, colour, 2)
     cv2.circle(frame, centre, 3, colour, cv2.FILLED)
 
@@ -159,6 +164,8 @@ def _gesture_label(
 ) -> tuple[str, tuple[int, int, int]]:
     if hand is None or gestures is None:
         return "NO HAND", _GREY
+    if gestures.two_gesture:
+        return "DOUBLE CLICK (V)", _CYAN
     if gestures.left_pinch:
         return "LEFT CLICK / DRAG", _RED
     return "MOVE", _GREEN
@@ -176,6 +183,7 @@ def _draw_status_panel(
         (f"FPS: {fps:4.1f}", _WHITE),
         (f"Gesture: {label}", label_colour),
         ("Index = move  |  Pinch index = click/drag", _GREY),
+        ("Two fingers up (V) = double click", _GREY),
         ("'q' / ESC = quit", _GREY),
     ]
 

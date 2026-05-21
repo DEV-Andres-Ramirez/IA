@@ -31,7 +31,14 @@ class Landmark(IntEnum):
     WRIST = 0
     THUMB_TIP = 4
     INDEX_MCP = 5  # knuckle at the base of the index finger
+    INDEX_PIP = 6  # middle joint of the index finger
     INDEX_TIP = 8
+    MIDDLE_PIP = 10
+    MIDDLE_TIP = 12
+    RING_PIP = 14
+    RING_TIP = 16
+    PINKY_PIP = 18
+    PINKY_TIP = 20
 
 
 @dataclass(frozen=True)

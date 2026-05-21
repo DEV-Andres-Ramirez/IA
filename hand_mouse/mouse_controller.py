@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 
 import pyautogui
 
@@ -22,6 +23,35 @@ pyautogui.PAUSE = 0.0
 
 def _clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
+
+
+def _double_click_macos(x: float, y: float) -> None:
+    """Post a native double-click at (x, y) on macOS.
+
+    The decisive detail is ``kCGMouseEventClickState``: macOS only treats the
+    second press as a double-click when that field is set to 2. pyautogui
+    leaves it unset, which is why its doubleClick() often registers as two
+    separate single clicks instead.
+    """
+    import Quartz
+
+    position = (x, y)
+    button = Quartz.kCGMouseButtonLeft
+
+    def post(event_type: int, click_state: int) -> None:
+        event = Quartz.CGEventCreateMouseEvent(
+            None, event_type, position, button
+        )
+        Quartz.CGEventSetIntegerValueField(
+            event, Quartz.kCGMouseEventClickState, click_state
+        )
+        Quartz.CGEventPost(Quartz.kCGHIDEventTap, event)
+
+    # First click of the pair, then the second one marked as click-state 2.
+    post(Quartz.kCGEventLeftMouseDown, 1)
+    post(Quartz.kCGEventLeftMouseUp, 1)
+    post(Quartz.kCGEventLeftMouseDown, 2)
+    post(Quartz.kCGEventLeftMouseUp, 2)
 
 
 class MouseController:
@@ -49,6 +79,7 @@ class MouseController:
         """Apply one frame of gestures to the operating-system cursor."""
         self._move_cursor(gestures.cursor_target)
         self._apply_left_pinch(gestures.left_pinch)
+        self._apply_double_click(gestures.double_click)
 
     def release(self) -> None:
         """Release any held button and drop smoothing state.
@@ -76,6 +107,31 @@ class MouseController:
             pyautogui.mouseUp()
             self._left_button_down = False
             logger.debug("Left button up.")
+
+    def _apply_double_click(self, should_fire: bool) -> None:
+        # `should_fire` is already a one-shot pulse from the recogniser, which
+        # also enforces the re-arm and cooldown rules, so no extra state here.
+        if not should_fire:
+            return
+        self._perform_double_click()
+        logger.info("Double click performed.")
+
+    def _perform_double_click(self) -> None:
+        """Double-click at the current cursor position.
+
+        macOS uses a native Quartz event because pyautogui's doubleClick()
+        posts two independent clicks that macOS frequently reads as two
+        separate single clicks rather than a double-click.
+        """
+        if sys.platform == "darwin" and self._smoothed is not None:
+            try:
+                _double_click_macos(self._smoothed.x, self._smoothed.y)
+                return
+            except Exception as error:  # fall back if Quartz misbehaves
+                logger.warning(
+                    "Native double-click failed, using fallback: %s", error
+                )
+        pyautogui.doubleClick()
 
     def _map_to_screen(self, target: Point) -> Point:
         """Map a normalised hand position to absolute screen coordinates.

@@ -48,6 +48,11 @@ class ControlConfig:
     pinch_close_threshold: float = 0.45
     pinch_open_threshold: float = 0.65
 
+    # Seconds to wait after a double-click before the index+middle "two"
+    # gesture may trigger another one. Guards against an accidental,
+    # unintended double-click in quick succession.
+    double_click_cooldown: float = 5.0
+
     def __post_init__(self) -> None:
         if not 0.0 <= self.active_region_margin < 0.5:
             raise ValueError("active_region_margin must be in [0.0, 0.5).")
@@ -57,6 +62,8 @@ class ControlConfig:
             raise ValueError(
                 "pinch_open_threshold must be greater than pinch_close_threshold."
             )
+        if self.double_click_cooldown < 0.0:
+            raise ValueError("double_click_cooldown must be non-negative.")
 
 
 @dataclass(frozen=True)
